@@ -216,7 +216,7 @@ Deviation from CRB indicates:
 
 # Acoustic simulation (k-Wave)
 
-In addition to analytical modeling, we simulate acoustic propagation using **Python k-Wave** :contentReference[oaicite:0]{index=0}.
+In addition to analytical modeling, we simulate acoustic propagation using **Python k-Wave**.
 
 ---
 
