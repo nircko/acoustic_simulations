@@ -31,7 +31,7 @@ $$
 
 including:
 
-- microphone positions $\mathbf{x}_0,\ldots,\mathbf{x}_{M-1}$ 
+- microphone positions $\mathbf{x}_0, \ldots, \mathbf{x}_{M-1}$
 - source positions $\mathbf{s}_i$  
 
 (after removing gauge freedom).
