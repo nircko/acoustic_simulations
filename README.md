@@ -1,260 +1,357 @@
-# Acoustic Simulations
-
-
-
-## TDOA Microphone Array Calibration and Robust Source Localization
+# Error propagation vs. initialization noise in TDOA microphone calibration
+<p align="center">
+  <img src="data/scene_plot.png" width="30%" />
+  <img src="data/experiment_rotating_array.gif" width="30%" />
+  <img src="data/convergence_plot.png" width="30%" />
+</p>
 
 This repository studies **TDOA-based microphone calibration** and **source localization** under realistic acoustic conditions, with an emphasis on:
 
 - nonlinear calibration error propagation,
 - robustness to measurement noise,
 - downstream localization accuracy,
-- and simulation tools for testing difficult scenarios such as **non-line-of-sight (NLOS)** propagation.
+- and physics-based simulation using **Python k-Wave**.
 
-A key idea throughout the project is that **good initialization alone is not enough**. In nonlinear TDOA calibration, the final error is determined by both:
+A key idea throughout is:
 
-1. the **local geometry and conditioning** of the problem, and  
-2. the **measurement noise** that enters the residual model.
+> Initialization noise affects **which solution** the nonlinear optimizer reaches.  
+> Measurement noise affects the **local uncertainty** of the converged solution.
 
-To study these effects in a controlled way, we combine:
-
-- a nonlinear TDOA calibration / optimization pipeline,
-- Cramer--Rao style diagnostics,
-- and **Python k-Wave acoustic simulations** of a **rotating microphone array** mounted on a **PMMA slab**, including difficult propagation conditions.
+So even if the initial guess is close to the truth, the final calibration error can still be larger due to noise and geometry.
 
 ---
 
-## What this repository is about
+## 1. Measurement model (TDOA residual)
 
-We work on the calibration and use of a microphone array for acoustic source localization.
-
-The general workflow is:
-
-1. **Calibrate the microphone array geometry** from TDOA measurements.
-2. **Quantify uncertainty** using Jacobian-based error propagation and Fisher / CRB analysis.
-3. **Use the calibrated array for source localization**.
-4. **Test robustness in simulation**, including rotating-array operation and non-line-of-sight support.
-
-The project focuses on the fact that microphone geometry uncertainty does not disappear after calibration. If we later localize sources using an imperfect array estimate, the remaining geometry error becomes a floor on downstream localization accuracy.
-
----
-
-## Main goals
-
-The repository has four main goals:
-
-### 1. Microphone geometry calibration
-
-We estimate microphone positions from TDOA constraints and additional geometric information when available. The calibration problem is nonlinear and typically requires:
-
-- gauge fixing,
-- careful initialization,
-- repeated or multi-pose measurements,
-- and robust optimization.
-
-### 2. Error propagation analysis
-
-We analyze how measurement noise propagates into estimated microphone and source positions. The central question is:
-
-> Does the final calibration error follow the initialization perturbation, or does it follow the measurement noise and geometry?
-
-The answer is that, at leading order, the local estimation covariance is controlled by the **measurement model**, the **Jacobian**, and the **weighting**, not by the initialization perturbation itself.
-
-### 3. Downstream source localization
-
-We study what happens after calibration, when we treat the estimated microphone array as known and use it to localize sources. This stage is sensitive to residual calibration error, especially in weak or ambiguous geometries.
-
-### 4. Physics-based acoustic simulation
-
-We use **Python k-Wave simulation** to generate realistic acoustic data for testing the localization pipeline in conditions that are difficult to model analytically, especially:
-
-- rotating-array acquisition,
-- multipath,
-- occlusion,
-- non-line-of-sight propagation,
-- and structured support materials such as a PMMA slab.
-
----
-
-## Repository structure
-
-A typical repository structure is organized around:
-
-- calibration and optimization code,
-- Jacobian / CRB utilities,
-- simulation scripts,
-- experiment configs,
-- and plotting / debugging tools.
-
-For example, utilities such as:
-
-- `src/utils/cramer_rao_calibration.py`
-
-are used to evaluate local Fisher-information style bounds and compare empirical error against linearized prediction.
-
-Depending on the experiment setup, other modules typically handle:
-
-- residual construction,
-- Jacobian evaluation,
-- unknown-state packing / unpacking,
-- weighting,
-- optimization,
-- and simulation orchestration.
-
----
-
-## Core technical idea
-
-The main conceptual distinction in this repository is the difference between:
-
-- **initialization noise**, and
-- **measurement noise**.
-
-Suppose we initialize the optimizer at
+We estimate parameters:
 
 $$
-\hat{\boldsymbol{\theta}}^{(0)} = \boldsymbol{\theta}^{\mathrm{true}} + \boldsymbol{\eta},
+\boldsymbol{\theta}
 $$
 
-where $\boldsymbol{\eta}$ is the starting-point perturbation.
+including:
 
-This perturbation matters because it affects the nonlinear solve:
+- microphone positions $\mathbf{x}_0,\ldots,\mathbf{x}_{M-1}$  
+- source positions $\mathbf{s}_i$  
 
-- which basin we enter,
-- whether we reach a good solution,
-- whether we get trapped in a poor local minimum.
+(after removing gauge freedom).
 
-But once we linearize near a converged solution, the first-order estimation error is controlled by the measurement noise:
+For source $i$ and microphone $j \neq 0$, we define the forward model:
 
 $$
-\mathbf{e}(\boldsymbol{\theta}^{\mathrm{true}} + \delta\boldsymbol{\theta})
+h_{ij}(\boldsymbol{\theta})
+=
+\frac{\|\mathbf{x}_j - \mathbf{s}_i\| - \|\mathbf{x}_0 - \mathbf{s}_i\|}{c}
+$$
+
+Measured TDOA:
+
+$$
+\Delta t_{ij}^{\text{meas}} = \Delta t_{ij}^{\text{true}} + \epsilon_{ij}
+$$
+
+Residual:
+
+$$
+e_{ij}(\boldsymbol{\theta})
+=
+h_{ij}(\boldsymbol{\theta}) - \Delta t_{ij}^{\text{meas}}
+$$
+
+Noise model:
+
+$$
+\mathbb{E}[\epsilon_{ij}] = 0, \quad
+\mathrm{Var}(\epsilon_{ij}) = \sigma_{t,ij}^2
+$$
+
+---
+
+## 2. Equivalent path-difference interpretation
+
+We define:
+
+$$
+\delta d_{ij} = c\,\epsilon_{ij}
+$$
+
+so:
+
+$$
+\mathrm{Var}(\delta d_{ij}) = c^2 \sigma_{t,ij}^2
+$$
+
+Thus:
+
+$$
+\sigma_d = c\,\sigma_t
+$$
+
+This provides a direct scale for spatial error.
+
+---
+
+## 3. Initialization (starting guess)
+
+We initialize:
+
+$$
+\hat{\boldsymbol{\theta}}^{(0)} =
+\boldsymbol{\theta}^{\text{true}} + \boldsymbol{\eta}
+$$
+
+where $\boldsymbol{\eta}$ is the initialization error.
+
+This affects:
+
+- convergence basin,
+- local minima selection,
+- solver stability.
+
+It does **not** define final estimation uncertainty.
+
+---
+
+## 4. Objective (weighted least squares)
+
+We stack all residuals:
+
+$$
+\mathbf{e}(\boldsymbol{\theta})
+$$
+
+We minimize:
+
+$$
+F(\boldsymbol{\theta}) =
+\frac{1}{2}\mathbf{e}^\top \mathbf{W}\mathbf{e}
+$$
+
+with:
+
+$$
+\mathbf{W} = \mathbf{\Sigma}^{-1}
+$$
+
+At convergence:
+
+$$
+\nabla F(\hat{\boldsymbol{\theta}}) \approx 0
+$$
+
+---
+
+## 5. First-order error propagation
+
+Linearize:
+
+$$
+\mathbf{e}(\boldsymbol{\theta}^{\text{true}} + \delta\boldsymbol{\theta})
 \approx
-\mathbf{J}\,\delta\boldsymbol{\theta} - \boldsymbol{\epsilon},
+\mathbf{J}\,\delta\boldsymbol{\theta} - \boldsymbol{\epsilon}
 $$
 
 where:
 
-- $\mathbf{e}$ is the stacked residual vector,
-- $\mathbf{J}$ is the Jacobian of the residuals with respect to the unknowns,
-- $\boldsymbol{\epsilon}$ is the measurement-noise vector.
+$$
+\mathbf{J} =
+\frac{\partial \mathbf{e}}{\partial \boldsymbol{\theta}}
+$$
 
-Then the first-order Gauss--Newton solution satisfies
+Gauss–Newton:
 
 $$
 \mathbf{J}^\top \mathbf{W} \mathbf{J}\,\delta\boldsymbol{\theta}
 =
-\mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon},
+\mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
 $$
 
-so that the local covariance is approximately
+Solution:
+
+$$
+\delta\boldsymbol{\theta}
+=
+(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
+\mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
+$$
+
+---
+
+## 6. Covariance of the estimate
+
+General form:
+
+$$
+\mathrm{Cov}(\delta\boldsymbol{\theta})
+=
+(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
+\mathbf{J}^\top \mathbf{W}
+\mathbf{\Sigma}_\epsilon
+\mathbf{W}\mathbf{J}
+(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
+$$
+
+If $\mathbf{W} = \mathbf{\Sigma}_\epsilon^{-1}$:
 
 $$
 \mathrm{Cov}(\delta\boldsymbol{\theta})
 \approx
 (\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
-\mathbf{J}^\top \mathbf{W}\,
-\mathbf{\Sigma}_{\epsilon}\,
-\mathbf{W}\mathbf{J}
-(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}.
 $$
-
-If the weighting is matched to the noise model, this simplifies to
-
-$$
-\mathrm{Cov}(\delta\boldsymbol{\theta})
-\approx
-(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}.
-$$
-
-This means:
-
-> The final local uncertainty is driven by **measurement noise and geometry**, not by the size of the initialization perturbation.
-
-That is why the final calibration error can be larger than the initialization noise and still be perfectly consistent with theory.
 
 ---
 
-## TDOA calibration model
+## 7. Key result
 
-For source $i$ and microphone $j \neq 0$, a standard TDOA forward model in time units is
+At leading order:
 
-$$
-h_{ij}(\boldsymbol{\theta})
-=
-\frac{\|\mathbf{x}_j - \mathbf{s}_i\| - \|\mathbf{x}_0 - \mathbf{s}_i\|}{c},
-$$
+- error is driven by **measurement noise**
+- geometry enters via $\mathbf{J}$
+- initialization $\boldsymbol{\eta}$ does **not** appear
 
-where:
-
-- $\mathbf{x}_0$ is the reference microphone,
-- $\mathbf{x}_j$ is microphone $j$,
-- $\mathbf{s}_i$ is source $i$,
-- $c$ is the speed of sound.
-
-The measured TDOA is
+There is no general bound:
 
 $$
-\Delta t_{ij}^{\mathrm{meas}}
-=
-\Delta t_{ij}^{\mathrm{true}} + \epsilon_{ij},
+\|\hat{\boldsymbol{\theta}} - \boldsymbol{\theta}^{\text{true}}\|
+\le
+\|\boldsymbol{\eta}\|
 $$
 
-and the residual is
+---
+
+## 8. Order-of-magnitude intuition
 
 $$
-e_{ij}(\boldsymbol{\theta})
-=
-h_{ij}(\boldsymbol{\theta}) - \Delta t_{ij}^{\mathrm{meas}}.
+\sigma_d \sim c\,\sigma_t
 $$
 
-All residuals are stacked into a single vector and minimized in weighted least squares, optionally together with additional geometric constraints such as panel-distance terms.
-
-
-## Rotating microphone array for NLOS support
-
-A major motivation for the rotating-array simulation is **non-line-of-sight support**.
-
-In NLOS scenarios, direct-path assumptions are often violated. A source may be:
-
-- partially occluded,
-- visible only through indirect propagation,
-- or observed with distorted first-arrival structure.
-
-
-Slab model
-
-The array (mounted device) is simulated together with a PMMA-like properties slab, which serves as a structured support / propagation element in the acoustic model.
-
-The purpose of including the slab is to better match realistic experimental hardware and to capture non-ideal acoustic effects that can influence TDOA extraction.
-
-Depending on the exact simulation parameters, the PMMA slab may contribute to:
-
-- altered propagation paths,
-- interface reflections,
-- transmission delays,
-- and pose-dependent acoustic behaviour.
-
-This matters because a localization method that performs well only in ideal free-field conditions may fail once material effects are introduced.
-
-By simulating the array together with the PMMA slab, we can evaluate whether the localization pipeline remains stable under more realistic operating conditions.
-
-
-
-## Solver and diagnostics
-
-We examine whether the optimized residuals are consistent with the assumed noise model.
-
-
-We inspect the Jacobian and the normal matrix
-
 $$
-\mathbf{J}^\top \mathbf{W} \mathbf{J}
+\sigma_x \sim \kappa\,\sigma_d
 $$
 
+where $\kappa$ depends on geometry.
 
+Thus:
 
-We estimate a local lower bound on covariance to understand the best accuracy we can expect under the model assumptions.
+$$
+\kappa\sigma_d \gg \sigma_{\mathrm{init}}
+\Rightarrow \text{final error exceeds initialization noise}
+$$
 
+---
 
-When ground truth is available in simulation, we compare empirical estimation error to the scale predicted by the linearized covariance.
+## 9. Mic calibration vs source localization
+
+We split:
+
+### Calibration
+Estimate $\mathbf{x}$ accurately.
+
+### Localization
+Estimate $\mathbf{s}$ using $\hat{\mathbf{x}}$.
+
+Linearization:
+
+$$
+\mathbf{e}
+\approx
+\mathbf{J}_x \delta\mathbf{x}
++
+\mathbf{J}_s \delta\mathbf{s}
+-
+\boldsymbol{\epsilon}
+$$
+
+Mic errors propagate into source estimates.
+
+---
+
+## 10. Cramér–Rao viewpoint
+
+$$
+\mathbf{F} = \mathbf{J}^\top \mathbf{W} \mathbf{J}
+$$
+
+$$
+\mathrm{Cov} \approx \mathbf{F}^{+}
+$$
+
+Deviation from CRB indicates:
+
+- nonlinearity
+- local minima
+- model mismatch
+
+---
+
+# Acoustic simulation (k-Wave)
+
+In addition to analytical modeling, we simulate acoustic propagation using **Python k-Wave** :contentReference[oaicite:0]{index=0}.
+
+---
+
+## Rotating microphone array
+
+We simulate a **rotating array** to improve robustness.
+
+Benefits:
+
+- increased geometric diversity  
+- improved conditioning of $\mathbf{J}$  
+- reduced ambiguity  
+- robustness to NLOS  
+
+Each rotation provides a new effective measurement geometry.
+
+---
+
+## Non-line-of-sight (NLOS) support
+
+In NLOS:
+
+- direct path may be blocked  
+- TDOA becomes unreliable  
+
+The rotating array helps because:
+
+- different poses expose different propagation paths  
+- some views recover usable information  
+
+---
+
+## PMMA slab model
+
+The array is simulated together with a **PMMA slab** :contentReference[oaicite:1]{index=1}.
+
+This introduces:
+
+- reflections  
+- transmission delays  
+- structured propagation  
+
+This makes the problem more realistic than free-field assumptions.
+
+---
+
+## k-Wave propagation simulation
+
+We use k-Wave to simulate:
+
+- full acoustic wave propagation  
+- time-domain pressure fields  
+- arrival signals at microphones  
+
+The attached GIF (see repository) shows:
+
+- wavefront propagation  
+- interaction with the PMMA slab  
+- signal arrival at the array  
+
+This validates that:
+
+- TDOA measurements arise from actual wave physics  
+- not just ideal geometric assumptions  
+
+---
+
 
