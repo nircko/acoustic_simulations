@@ -39,8 +39,7 @@ including:
 For source $i$ and microphone $j \neq 0$, we define the forward model:
 
 $$
-h_{ij}(\boldsymbol{\theta})
-=
+h_{ij}(\boldsymbol{\theta}) =
 \frac{\|\mathbf{x}_j - \mathbf{s}_i\| - \|\mathbf{x}_0 - \mathbf{s}_i\|}{c}
 $$
 
@@ -52,9 +51,10 @@ $$
 
 Residual:
 
+
 $$
-e_{ij}(\boldsymbol{\theta})
-=
+e_{ij}(\boldsymbol{\theta}) = 
+
 h_{ij}(\boldsymbol{\theta}) - \Delta t_{ij}^{\text{meas}}
 $$
 
