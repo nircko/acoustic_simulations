@@ -249,12 +249,9 @@ Estimate $\mathbf{s}$ using $\hat{\mathbf{x}}$.
 Linearization:
 
 $$
-\mathbf{e}
-\approx
-\mathbf{J}_x \delta\mathbf{x}
-+
-\mathbf{J}_s \delta\mathbf{s}
--
+\mathbf{e} \approx
+\mathbf{J}_x \delta\mathbf{x} +
+\mathbf{J}_s \delta\mathbf{s} -
 \boldsymbol{\epsilon}
 $$
 
