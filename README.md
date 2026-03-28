@@ -31,7 +31,7 @@ $$
 
 including:
 
-- microphone positions $\mathbf{x}_0, \ldots, \mathbf{x}_{M-1}$
+- microphone positions $\mathbf{x}_0,\ldots,\mathbf{x}_{M-1}$
 - source positions $\mathbf{s}_i$  
 
 (after removing gauge freedom).
@@ -160,16 +160,14 @@ $$
 Gauss–Newton:
 
 $$
-\mathbf{J}^\top \mathbf{W} \mathbf{J}\,\delta\boldsymbol{\theta}
-=
+\mathbf{J}^\top \mathbf{W} \mathbf{J}\,\delta\boldsymbol{\theta}=
 \mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
 $$
 
 Solution:
 
 $$
-\delta\boldsymbol{\theta}
-=
+\delta\boldsymbol{\theta}=
 (\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
 \mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
 $$
