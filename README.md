@@ -66,7 +66,7 @@ $$
 
 ---
 
-## 2. Equivalent path-difference interpretation
+##  Equivalent path-difference interpretation
 
 We define:
 
@@ -90,7 +90,7 @@ This provides a direct scale for spatial error.
 
 ---
 
-## 3. Initialization (starting guess)
+## Initialization (starting guess)
 
 We initialize:
 
@@ -111,7 +111,7 @@ It does **not** define final estimation uncertainty.
 
 ---
 
-## 4. Objective (weighted least squares)
+## Objective (weighted least squares)
 
 We stack all residuals:
 
@@ -140,7 +140,7 @@ $$
 
 ---
 
-## 5. First-order error propagation
+## First-order error propagation
 
 Linearize:
 
@@ -172,71 +172,8 @@ $$
 \mathbf{J}^\top \mathbf{W}\ \boldsymbol{\epsilon}
 $$
 
----
 
-## 6. Covariance of the estimate
-
-General form:
-
-$$
-\mathrm{Cov}(\delta\boldsymbol{\theta})=
-(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
-\mathbf{J}^\top \mathbf{W}
-\mathbf{\Sigma}_\epsilon
-\mathbf{W}\mathbf{J}
-(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
-$$
-
-If $\mathbf{W} = \mathbf{\Sigma}_\epsilon^{-1}$:
-
-$$
-\mathrm{Cov}(\delta\boldsymbol{\theta})
-\approx
-(\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
-$$
-
----
-
-## 7. Key result
-
-At leading order:
-
-- error is driven by **measurement noise**
-- geometry enters via $\mathbf{J}$
-- initialization $\boldsymbol{\eta}$ does **not** appear
-
-There is no general bound:
-
-$$
-\|\hat{\boldsymbol{\theta}} - \boldsymbol{\theta}^{\text{true}}\|
-\le
-\|\boldsymbol{\eta}\|
-$$
-
----
-
-## 8. Order-of-magnitude intuition
-
-$$
-\sigma_d \sim c\,\sigma_t
-$$
-
-$$
-\sigma_x \sim \kappa\,\sigma_d
-$$
-
-where $\kappa$ depends on geometry.
-
-Thus:
-
-$$
-\kappa\sigma_d \gg \sigma_{\mathrm{init}}
-\Rightarrow \text{final error exceeds initialization noise}
-$$
-
----
-
-## 9. Mic calibration vs source localization
+##  Mic calibration vs source localization
 
 We split:
 
@@ -259,7 +196,7 @@ Mic errors propagate into source estimates.
 
 ---
 
-## 10. Cramér–Rao viewpoint
+## Cramér–Rao viewpoint
 
 $$
 \mathbf{F} = \mathbf{J}^\top \mathbf{W} \mathbf{J}
