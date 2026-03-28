@@ -160,8 +160,8 @@ $$
 Gauss–Newton:
 
 $$
-\mathbf{J}^\top \mathbf{W} \mathbf{J}\,\delta\boldsymbol{\theta}=
-\mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
+\mathbf{J}^\top \mathbf{W} \mathbf{J}\ \delta\boldsymbol{\theta}=
+\mathbf{J}^\top \mathbf{W}\ \boldsymbol{\epsilon}
 $$
 
 Solution:
@@ -169,7 +169,7 @@ Solution:
 $$
 \delta\boldsymbol{\theta}=
 (\mathbf{J}^\top \mathbf{W} \mathbf{J})^{-1}
-\mathbf{J}^\top \mathbf{W}\,\boldsymbol{\epsilon}
+\mathbf{J}^\top \mathbf{W}\ \boldsymbol{\epsilon}
 $$
 
 ---
@@ -309,42 +309,5 @@ The rotating array helps because:
 
 - different poses expose different propagation paths  
 - some views recover usable information  
-
----
-
-## PMMA slab model
-
-The array is simulated together with a **PMMA slab** :contentReference[oaicite:1]{index=1}.
-
-This introduces:
-
-- reflections  
-- transmission delays  
-- structured propagation  
-
-This makes the problem more realistic than free-field assumptions.
-
----
-
-## k-Wave propagation simulation
-
-We use k-Wave to simulate:
-
-- full acoustic wave propagation  
-- time-domain pressure fields  
-- arrival signals at microphones  
-
-The attached GIF (see repository) shows:
-
-- wavefront propagation  
-- interaction with the PMMA slab  
-- signal arrival at the array  
-
-This validates that:
-
-- TDOA measurements arise from actual wave physics  
-- not just ideal geometric assumptions  
-
----
 
 
