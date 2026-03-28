@@ -196,24 +196,6 @@ Mic errors propagate into source estimates.
 
 ---
 
-## Cramér–Rao viewpoint
-
-$$
-\mathbf{F} = \mathbf{J}^\top \mathbf{W} \mathbf{J}
-$$
-
-$$
-\mathrm{Cov} \approx \mathbf{F}^{+}
-$$
-
-Deviation from CRB indicates:
-
-- nonlinearity
-- local minima
-- model mismatch
-
----
-
 # Acoustic simulation (k-Wave)
 
 In addition to analytical modeling, we simulate acoustic propagation using **Python k-Wave**.
